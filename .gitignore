@@ -1,0 +1,13 @@
+**/.env
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/serviceAccountKey.json
+**/*service-account*.json
+**/secom.data
+**/secom_labels.data
+**/dist/
+.DS_Store
+frontend/public/config.js
