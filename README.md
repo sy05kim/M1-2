@@ -1,6 +1,6 @@
 # M1-2: 반도체 공정 R&D 데이터 분석 AI 비서
 
-> **상태 (2026-11-24)**: 사용자 실습으로 로컬 Firestore 데이터 1,561건 조회, Swagger 200, 대시보드 그래프가 확인됨. **Vercel 프론트엔드 빌드/배포 READY (2026-11-24). 실제 OpenAI 채팅과 Render 백엔드는 미검증. 현재 Vercel은 API_BASE_URL이 없어 데이터/채팅 기능이 작동하지 않음.**
+> **상태 (2026-11-24)**: 사용자 실습으로 로컬 Firestore 데이터 1,561건 조회, Swagger 200, 대시보드 그래프가 확인됨. **Render 백엔드 및 Vercel 프론트엔드 배포 완료; 공개 웹에서 Firestore 데이터 1,561건과 그래프 확인(사용자 화면). 실제 AI 응답은 아직 미검증.**
 
 ## 시작하기 (처음 실행하는 사람을 위한 안내)
 
@@ -25,7 +25,7 @@ M1-1의 [UCI SECOM 반도체 제조 공정 분석](https://github.com/sy05kim/M1
 
 - Backend: Python 3.10+, FastAPI, Pydantic, Uvicorn
 - Database: Firebase Firestore (`data`, `conversations`)
-- AI: OpenAI Responses API (`OPENAI_MODEL`, 기본 `gpt-4.1-mini`)
+- AI: Google Gemini API (`GEMINI_MODEL`, 기본 `gemini-2.5-flash-lite`, 무료 등급 제공) 또는 OpenAI Responses API (`OPENAI_MODEL`, 기본 `gpt-4.1-mini`). `GEMINI_API_KEY`가 있으면 Gemini를 우선 사용합니다.
 - Frontend: HTML / CSS / JavaScript (프레임워크 없음; SVG 그래프)
 - Deployment: Backend Render, Frontend Vercel
 
@@ -139,7 +139,7 @@ python -m http.server 8001
 
 모든 `/api/data`, `/api/conversations`, `/api/chat` 엔드포인트는 `X-Access-Token` 헤더가 필수입니다.
 
-### 요청 예시
+### 요금 없는 Gemini 채팅 연결\n\nGoogle AI Studio https://aistudio.google.com/apikey 에서 Gemini API 키를 발급받은 후 Render Environment에 `GEMINI_API_KEY`를 **비공개** 값으로 저장하고 재배포합니다. 기본 모델은 `gemini-2.5-flash-lite`이며 무료 등급은 사용량 제한이 있습니다. `OPENAI_API_KEY`는 없어도 됩니다. 기존 `/api/chat` 엔드포인트, 대화 이력 및 Firestore 컨텍스트 주입은 그대로입니다. 유료 모델로 자동 전환하거나 OpenAI 비용을 발생시키지 않습니다. Google 무료 등급 입력 데이터는 제품 개선에 사용될 수 있어 **공개 SECOM 요약 데이터 외 개인·기밀 데이터를 넣지 마세요.** 과제에서 GPT/OpenAI 모델 자체가 필수라면 모델 변경 사실을 제출 자료에 정확히 기재해야 합니다.\n\n### 요청 예시
 
 `POST /api/data`:
 
@@ -160,7 +160,7 @@ python -m http.server 8001
 1. `/api/chat`이 `/api/data/summary`와 동일한 `get_summary()` 서비스를 실행.
 2. 서비스가 Firestore `data`를 읽어 요약(`count`, `metrics`, `trend`, `variability`, `quality`, `weekly_quality`, `outliers`)을 계산.
 3. `services/research_prompt.py`의 `system_context()`가 요약 JSON을 시스템 지침에 삽입. 공정 해석 요청이라면 관찰/가설/검증을 구분하도록 안내.
-4. OpenAI Responses API가 이전 12개 메시지와 새 질문을 처리(`store=False` 사용).
+4. `GEMINI_API_KEY`가 있으면 Google Gemini OpenAI 호환 Chat Completions API, 없으면 OpenAI Responses API가 이전 12개 메시지와 새 질문을 처리합니다(OpenAI 경로는 `store=False`).
 5. AI 응답과 사용자 질문을 Firestore `conversations`에 저장.
 6. 프론트가 AI 답변과 대화 기록을 갱신.
 
@@ -190,7 +190,7 @@ cd backend
 4. **Build Command**: `pip install -r requirements.txt`
 5. **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 6. **Environment**에 다음을 등록:
-   - `OPENAI_API_KEY`: OpenAI API 개인 키 (비공개)
+   - `GEMINI_API_KEY`: Google AI Studio에서 무료 등급 키를 발급받아 설정 (비공개; 우선 사용)\n   - `GEMINI_MODEL`: `gemini-2.5-flash-lite` (선택사항)\n   - `OPENAI_API_KEY`: OpenAI API 개인 키 (선택사항, 비공개)
    - `OPENAI_MODEL`: 사용할 Responses API 호환 모델
    - `FIREBASE_SERVICE_ACCOUNT_JSON`: Firebase 서비스 계정 JSON 원문 전체 (비공개)
    - `APP_ACCESS_TOKEN`: 강력한 비공개 토큰 (비공개)
@@ -215,9 +215,9 @@ cd backend
 
 ## 8. 배포 URL (실제 배포 후 직접 기재)
 
-- 프론트엔드 URL (Vercel 빌드 READY, API 미연결): https://m1-2-secom-rnd-ai.vercel.app
-- 백엔드 API URL: `미배포`
-- Swagger UI URL: `미배포` (`<백엔드 주소>/docs`)
+- 프론트엔드 URL (데이터/그래프 화면 확인): https://m1-2-secom-rnd-ai.vercel.app
+- 백엔드 API URL: https://m1-2-secom-rnd-api.onrender.com
+- Swagger UI URL: https://m1-2-secom-rnd-api.onrender.com/docs
 
 ## 9. 제출 스크린샷 (실제 동작 확인 후 첨부)
 
