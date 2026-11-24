@@ -54,11 +54,23 @@ class FakeOpenAI:
         FakeOpenAI.last_kwargs = kwargs
         return type("Response", (), {"output_text": "관찰: 통계 확인. 가능한 가설: 조건 차이. 추가 검증: 변수 비교."})()
 
+class FakeGemini:
+    last_kwargs = None
+    def __init__(self, **kwargs):
+        self.chat = self
+        self.completions = self
+    def create(self, **kwargs):
+        FakeGemini.last_kwargs = kwargs
+        message = type("Message", (), {"content": "관찰: 변동성 확인. 가설: 조건 변화. 추가 검증: 교차 비교."})()
+        choice = type("Choice", (), {"message": message})()
+        return type("Response", (), {"choices": [choice]})()
+
+
 class APITests(unittest.TestCase):
     def setUp(self):
         self.db = DB()
         self.patches = [
-            patch.dict(os.environ, {"APP_ACCESS_TOKEN": "mock-token", "OPENAI_API_KEY": "mock-key"}),
+            patch.dict(os.environ, {"APP_ACCESS_TOKEN": "mock-token", "OPENAI_API_KEY": "mock-key", "GEMINI_API_KEY": ""}),
             patch.object(firestore_db, "get_db", return_value=self.db),
             patch.object(data, "get_db", return_value=self.db),
             patch.object(conversations, "get_db", return_value=self.db),
@@ -93,6 +105,17 @@ class APITests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/conversations", headers=self.h).json()[0]["message_count"], 1)
         self.assertEqual(self.client.get(f"/api/conversations/{key}", headers=self.h).json()["messages"][0]["content"], "안녕")
         self.assertEqual(self.client.delete(f"/api/conversations/{key}", headers=self.h).status_code, 200)
+    def test_gemini_free_tier_context_and_autosave(self):
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "fake-gemini-key", "GEMINI_MODEL": "gemini-2.5-flash-lite"}):
+            with patch.object(chat, "OpenAI", FakeGemini):
+                r = self.client.post("/api/chat", headers=self.h, json={"question": "측정값은 왜 변동해?"})
+                self.assertEqual(r.status_code, 200, r.text)
+                self.assertEqual(r.json()["message_count"], 2)
+                self.assertEqual(FakeGemini.last_kwargs["model"], "gemini-2.5-flash-lite")
+                self.assertEqual(FakeGemini.last_kwargs["messages"][0]["role"], "system")
+                self.assertIn("추가 검증", FakeGemini.last_kwargs["messages"][0]["content"])
+                self.assertEqual(len(self.db.items["conversations"]), 1)
+
     def test_mocked_ai_context_and_autosave(self):
         r = self.client.post("/api/chat", headers=self.h, json={"question": "최근 추세는?"})
         self.assertEqual(r.status_code, 200, r.text)
