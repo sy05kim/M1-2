@@ -2,6 +2,9 @@
 import json
 import os
 from functools import lru_cache
+from pathlib import Path
+
+from config import BASE_DIR  # Resolve backend/.env when scripts run from anywhere
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -19,7 +22,12 @@ def get_db():
                 raise RuntimeError("FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON") from exc
             cred = credentials.Certificate(info)
         elif key_path:
-            cred = credentials.Certificate(key_path)
+            path = Path(key_path).expanduser()
+            if not path.is_absolute():
+                path = BASE_DIR / path
+            if not path.is_file():
+                raise RuntimeError(f"Firebase key file not found: {path.name} in backend/")
+            cred = credentials.Certificate(str(path))
         else:
             raise RuntimeError("Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_PATH")
         firebase_admin.initialize_app(cred)
