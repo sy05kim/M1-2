@@ -1,11 +1,11 @@
 # M1-2: 반도체 공정 R&D 데이터 분석 AI 비서
 
-> **상태**: 실행·배포용 프로젝트 소스코드. **실제 Firebase / OpenAI / Render / Vercel 계정 연동 및 배포 검증은 아직 완료되지 않음.**
+> **상태 (2026-11-24)**: 사용자 실습으로 로컬 Firestore 데이터 1,561건 조회, Swagger 200, 대시보드 그래프가 확인됨. **실제 OpenAI 채팅, Render/Vercel 배포는 미검증.**
 
 ## 시작하기 (처음 실행하는 사람을 위한 안내)
 
 **첫 번째 목표는 API 키를 연결하는 것이 아니라 FastAPI 서버를 실행해 `/docs`를 보는 것입니다.**
-자세한 클릭/명령어 안내는 **[START_HERE.md](START_HERE.md)**를 먼저 읽으세요.
+자세한 실행 안내: **[START_HERE.md](START_HERE.md)**. 필수 증빙: **[제출 체크리스트](docs/SUBMISSION_CHECKLIST.md)**. 기존 PC에서 설치 완료라면 프로젝트 폴더의 `RUN_LOCAL.bat`을 더블클릭해 서버 두 개를 실행할 수 있습니다.
 
 진행 순서: ① 코드 실행/테스트 → ② Firebase 연결 → ③ SECOM 원본 수집/가져오기 →
 ④ GPT 채팅 확인 → ⑤ Vercel/Render 배포 → ⑥ 제출 스크린샷 촬영.
@@ -179,12 +179,12 @@ cd backend
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-이 테스트는 별도의 Firebase/OpenAI 키 없이 순수 통계 로직, Pydantic 입력 검증, R&D 프롬프트 구조를 확인합니다.
+이 테스트는 실제 비밀키 없이 통계·Pydantic·연구 프롬프트 로직을 검사합니다. 모의 Firestore 및 OpenAI를 사용하는 추가 API 통합 테스트는 로컬 최종점검 ZIP에 포함되며 테스트 10개가 통과했습니다.
 실제 통합 테스트는 Firebase/Render/Vercel에 연결 후 아래 체크리스트로 별도 진행해야 합니다.
 
 ## 6. Render 백엔드 배포
 
-1. 새 GitHub 저장소(예: `M1-2`)에 `M1-2_SECOM_RND_AI` 내용 업로드 (`.env`, 키 JSON, 원본 데이터 제외).
+1. 기존 GitHub 저장소 `https://github.com/sy05kim/M1-2`에 `M1-2_SECOM_RND_AI` 내용 업로드 (`.env`, 키 JSON, 원본 데이터 제외).
 2. Render → New → Web Service → GitHub 저장소 선택.
 3. **Root Directory**: `backend` (저장소 루트에 backend 폴더가 있을 때)
 4. **Build Command**: `pip install -r requirements.txt`
