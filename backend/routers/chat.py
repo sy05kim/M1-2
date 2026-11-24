@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 
 @router.post("")
 def chat(payload: ChatRequest):
-    if not os.getenv("OPENAI_API_KEY"):
-        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not configured")
+    # Prefer the optional no-cost Gemini key; do not fall back to OpenAI on provider errors.
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not gemini_key and not openai_key:
+        raise HTTPException(status_code=503, detail="Set GEMINI_API_KEY or OPENAI_API_KEY in Render Environment")
     db = get_db()
     col = db.collection("conversations")
     ref = col.document(payload.conversation_id) if payload.conversation_id else col.document()
@@ -34,18 +37,36 @@ def chat(payload: ChatRequest):
                 if m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str)]
     prompt_messages = previous + [{"role": "user", "content": payload.question}]
     data_summary = get_summary()
+    provider = "Gemini" if gemini_key else "OpenAI"
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=25.0, max_retries=1)
-        response = client.responses.create(
-            model=MODEL, instructions=system_context(data_summary), input=prompt_messages,
-            max_output_tokens=400, store=False,
-        )
-        answer = response.output_text.strip()
+        if gemini_key:
+            # Google supports OpenAI-compatible Chat Completions API.
+            # This keeps the same Firestore/summary/history pipeline and avoids paid OpenAI calls.
+            client = OpenAI(
+                api_key=gemini_key,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                timeout=35.0, max_retries=1,
+            )
+            response = client.chat.completions.create(
+                model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+                messages=[{"role": "system", "content": system_context(data_summary)}] + prompt_messages,
+                max_tokens=1024,
+            )
+            answer = (response.choices[0].message.content or "").strip()
+        else:
+            client = OpenAI(api_key=openai_key, timeout=25.0, max_retries=1)
+            response = client.responses.create(
+                model=MODEL, instructions=system_context(data_summary), input=prompt_messages,
+                max_output_tokens=400, store=False,
+            )
+            answer = response.output_text.strip()
         if not answer:
             raise ValueError("Empty model response")
-    except Exception:
-        logger.exception("OpenAI request failed")
-        raise HTTPException(status_code=502, detail="AI response failed; check model/key/quota on the server")
+    except Exception as exc:
+        # Do not write API keys or request bodies to logs.
+        logger.warning("AI provider %s failed: type=%s, http_status=%s",
+                       provider, type(exc).__name__, getattr(exc, "status_code", None))
+        raise HTTPException(status_code=502, detail="AI response failed; check provider key, model and free quota on Render")
     ts = datetime.now(timezone.utc).isoformat()
     saved_messages = (existing.to_dict().get("messages") or []) if existing else []
     saved_messages += [{"role": "user", "content": payload.question}, {"role": "assistant", "content": answer}]
