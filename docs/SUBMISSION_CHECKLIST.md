@@ -8,7 +8,7 @@
 - [ ] Real Firestore data CRUD create or edit, displayed in UI; avoid altering the 1,561 originals (delete temporary test item)
 - [ ] Conversation save, list and reload, captured from the UI
 - [ ] Render deployed and `https://.../docs` verified
-- [ ] Vercel deployed, linked to Render API, final URL verified
+- [x] Vercel frontend Git deployment READY; production alias assigned (2026-11-24)\n- [ ] Set Vercel API_BASE_URL to real Render URL, rebuild and confirm live end-to-end data + chat
 - [ ] Update README URLs and attach screenshots: chat, CRUD, conversation history, Swagger
 - [ ] Check GitHub does NOT contain `.env`, `serviceAccountKey.json`, access token or SECOM raw data
 
@@ -26,7 +26,7 @@ No secret key belongs in GitHub or browser JavaScript. ChatGPT Plus subscription
 "I developed a semiconductor process R&D assistant using publicly available SECOM inspection data. I stored 1,561 valid measurements in Firestore and use FastAPI to calculate statistics, trends, and variation. The backend passes the summary as context to GPT so the assistant can distinguish observed findings from possible hypotheses and further tests. The interface includes data editing and past conversations. Because the underlying variables are anonymous and historical, the project does not identify real fault causes or prove process optimization."
 
 ## Final URLs
-- Frontend Vercel: NOT DEPLOYED
+- Frontend Vercel (READY; not wired to backend): https://m1-2-secom-rnd-ai.vercel.app
 - Backend Render: NOT DEPLOYED
 - Swagger: NOT DEPLOYED
 
