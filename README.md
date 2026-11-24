@@ -1,6 +1,6 @@
 # M1-2: 반도체 공정 R&D 데이터 분석 AI 비서
 
-> **상태 (2026-11-24)**: 사용자 실습으로 로컬 Firestore 데이터 1,561건 조회, Swagger 200, 대시보드 그래프가 확인됨. **실제 OpenAI 채팅, Render/Vercel 배포는 미검증.**
+> **상태 (2026-11-24)**: 사용자 실습으로 로컬 Firestore 데이터 1,561건 조회, Swagger 200, 대시보드 그래프가 확인됨. **Vercel 프론트엔드 빌드/배포 READY (2026-11-24). 실제 OpenAI 채팅과 Render 백엔드는 미검증. 현재 Vercel은 API_BASE_URL이 없어 데이터/채팅 기능이 작동하지 않음.**
 
 ## 시작하기 (처음 실행하는 사람을 위한 안내)
 
@@ -194,7 +194,7 @@ cd backend
    - `OPENAI_MODEL`: 사용할 Responses API 호환 모델
    - `FIREBASE_SERVICE_ACCOUNT_JSON`: Firebase 서비스 계정 JSON 원문 전체 (비공개)
    - `APP_ACCESS_TOKEN`: 강력한 비공개 토큰 (비공개)
-   - `ALLOWED_ORIGINS`: Vercel 정식 주소 (예: `https://YOUR-PROJECT.vercel.app`)
+   - `ALLOWED_ORIGINS`: `https://m1-2-secom-rnd-ai.vercel.app`
 7. Render 서버 주소 끝에 `/docs`를 붙여 Swagger 확인.
 
 **중요**: Render에는 서비스 계정 키 파일을 업로드하지 않습니다. `FIREBASE_SERVICE_ACCOUNT_JSON` 환경 변수를 사용합니다.
@@ -215,7 +215,7 @@ cd backend
 
 ## 8. 배포 URL (실제 배포 후 직접 기재)
 
-- 프론트엔드 URL: `미배포`
+- 프론트엔드 URL (Vercel 빌드 READY, API 미연결): https://m1-2-secom-rnd-ai.vercel.app
 - 백엔드 API URL: `미배포`
 - Swagger UI URL: `미배포` (`<백엔드 주소>/docs`)
 
