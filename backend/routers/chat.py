@@ -48,7 +48,7 @@ def chat(payload: ChatRequest):
                 timeout=35.0, max_retries=1,
             )
             response = client.chat.completions.create(
-                model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+                model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"),
                 messages=[{"role": "system", "content": system_context(data_summary)}] + prompt_messages,
                 max_tokens=1024,
             )
